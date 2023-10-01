@@ -1,0 +1,13 @@
+[tool.poetry]
+name = "air-quality-data-repository-api"
+version = "1.0.0"
+description = ""
+authors = [
+    "Roberto Hernandez <betohr60@gmail.com>"
+]
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.12"
+ipykernel = "6.21.*"
+pandas = "^2.0.3"
+openpyxl = "^3.1.2"

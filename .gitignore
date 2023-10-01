@@ -1,0 +1,23 @@
+# Visual Studio Code
+.vscode/
+
+# python
+__pycache__
+
+# Datasets
+datasets/
+.xlsx
+.csv
+
+# Environment variables
+.env
+
+# Testing
+.coverage
+htmlcov/
+
+# Mac
+.DS_Store
+
+# Temporal tests
+*.ipynb
