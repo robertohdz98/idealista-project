@@ -5,7 +5,6 @@ import pandas as pd
 
 from src.modules.auth import get_oauth_token
 from src.modules.search import search_api, set_url
-from src.modules.transform import df_to_file
 
 
 def main():
@@ -15,16 +14,14 @@ def main():
 
     url = set_url("es", "es", operation="rent", property_type="homes")
 
-    url_first = url.format(1)
-    results = search_api(url_first, token)
-    total_pages = results['totalPages']
+    results_first = search_api(url, 1, token)
+    total_pages = results_first['totalPages']
     print("Total pages found: ", total_pages)
 
-    df_tot = pd.DataFrame()
+    df_tot = pd.DataFrame.from_dict(results_first["elementList"])
+
     for page in range(2, total_pages):
-        # Add the pagination to the url
-        url = url.format(page)
-        results = search_api(url, token)
+        results = search_api(url, page, token)
         df = pd.DataFrame.from_dict(results['elementList'])
 
         # Increase 50 records (by default) each iteration

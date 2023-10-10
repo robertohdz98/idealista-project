@@ -20,7 +20,7 @@ def get_oauth_token(api_key, secret):
     headers_dic = {"Authorization": auth,
                    "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"}
 
-    params_dic = {"grant_type": "client_credentials",   # Define the request params
+    params_dic = {"grant_type": "client_credentials",
                   "scope": "read"}
 
     response = requests.post("https://api.idealista.com/oauth/token",

@@ -21,3 +21,4 @@ htmlcov/
 
 # Temporal tests
 *.ipynb
+.pdf
