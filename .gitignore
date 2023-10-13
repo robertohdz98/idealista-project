@@ -21,3 +21,6 @@ htmlcov/
 
 # Temporal tests
 *.ipynb
+
+# airflow logs
+airflow-etl/src/logs/
