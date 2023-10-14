@@ -10,7 +10,7 @@ WORKDIR $HOMEDIR
 ENV PYTHONPATH='$PYTHONPATH:/app'
 
 RUN pip install --no-cache-dir --upgrade pip
-RUN pip install poetry
+RUN pip install idna poetry
 
 COPY poetry.lock poetry.lock
 COPY pyproject.toml pyproject.toml
