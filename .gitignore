@@ -22,3 +22,4 @@ htmlcov/
 # Temporal tests
 *.ipynb
 .pdf
+deprecated/
