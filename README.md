@@ -19,14 +19,15 @@ This is a Python-based project. All components are containerised using Docker.
     │     └── kubernetes/
     │
     ├── svc-***
-    │   ├── docs/                    <--- Docs for indiv component
+    │   ├── deployment/              <--- Docker-compose for indiv component
     │   ├── src/                     <--- Source code for indiv component
     │   │   ├── modules/
     │   │   └── app.py
     │   ├── tests/                   <--- Tests for indiv component (if needed)
     |   ├── Dockerfile               <--- Dockerfile for indiv component (if needed)
     │   ├── poetry.lock              <--- Poetry dependencies (do not edit)
-    │   └── pyproject.toml           <--- Component dependencies management
+    │   ├── pyproject.toml           <--- Component dependencies management
+    │   └── README.md                <--- Description of the component
     │
     ├── .gitignore
     ├── dev.Dockerfile               <--- Dockerfile for dev environment
