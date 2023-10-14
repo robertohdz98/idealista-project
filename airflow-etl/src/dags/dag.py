@@ -7,6 +7,7 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 
 from modules.auth import get_oauth_token
+from modules.search import set_url, search_api
 
 #############
 #    DAG    #
@@ -26,11 +27,22 @@ with DAG(
     catchup=False,
 ) as dag:
     task1 = PythonOperator(
-        task_id="get_oauth_token", python_callable=get_oauth_token
+        task_id="t1_get_oauth_token", python_callable=get_oauth_token,
+        provide_context=True
     )
-#    task2 = PythonOperator(
-#        task_id="get_data_from_idealista_api", python_callable=
-#    )
+    task2 = PythonOperator(
+        task_id="t2_set_url", python_callable=set_url,
+        op_kwargs={
+                    "country": "es",
+                    "operation": "rent",
+                    "property_type": "homes"},
+        provide_context=True
+    )
+    task3 = PythonOperator(
+        task_id="t3_get_data_from_idealista_api", python_callable=search_api,
+        op_kwargs={"pagination": 1},
+        provide_context=True
+    )
 #    task3 = PythonOperator(
 #        task_id="transform_data", python_callable=
 #    )
@@ -38,4 +50,4 @@ with DAG(
 #        task_id="upload_data_to_db", python_callable=
 #    )
 
-    task1
+    task1 >> task2 >> task3
