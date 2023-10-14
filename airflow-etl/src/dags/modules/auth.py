@@ -9,7 +9,7 @@ import requests
 from airflow.models import Variable
 
 
-def get_oauth_token(*args, **kwargs):
+def get_oauth_token(*args, **kwargs) -> str:
     '''
     Returns personalised token.
     Ref.: https://www.kaggle.com/code/laurabarreda/extract-data-from-idealista-api
