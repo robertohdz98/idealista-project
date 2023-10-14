@@ -31,4 +31,4 @@ def get_oauth_token(*args, **kwargs) -> str:
 
     token = json.loads(response.text)['access_token']
 
-    return token
+    kwargs['ti'].xcom_push(key='oauth_token', value=token)
