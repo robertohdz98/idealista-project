@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "idealista-rent-price-predictor"
+name = "svc-template"
 version = "1.0.0"
 description = ""
 authors = [
@@ -14,5 +14,3 @@ pandas = "^2.0.3"
 openpyxl = "^3.1.2"
 fastapi = "^0.103.2"
 uvicorn = "^0.23.2"
-psycopg2-binary = "^2.9.9"
-

@@ -21,7 +21,5 @@ htmlcov/
 
 # Temporal tests
 *.ipynb
-
-# airflow logs and plugins
-airflow-etl/src/logs/
-airflow-etl/src/plugins/
+.pdf
+deprecated/
