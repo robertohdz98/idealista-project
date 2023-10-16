@@ -49,9 +49,9 @@ x-airflow-common: &airflow-common
     AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
     AIRFLOW__API__AUTH_BACKEND: 'airflow.api.auth.backend.basic_auth'
   volumes:
-    - ../../src/dags:/opt/airflow/dags #./dags:/opt/airflow/dags
-    - ../../src/logs:/opt/airflow/logs
-    - ../../src/plugins:/opt/airflow/plugins
+    - ../src/dags:/opt/airflow/dags #./dags:/opt/airflow/dags
+    - ../src/logs:/opt/airflow/logs
+    - ../src/plugins:/opt/airflow/plugins
   user: "${AIRFLOW_UID:-50000}:${AIRFLOW_GID:-50000}"
   depends_on:
     redis:
