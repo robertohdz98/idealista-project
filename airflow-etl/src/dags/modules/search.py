@@ -6,6 +6,8 @@ import requests
 
 import pandas as pd
 
+from .pagination import update_pagination
+
 from airflow.models import Variable
 
 # TODO: parameters passing
@@ -65,12 +67,14 @@ def set_url(country:str,
     kwargs['ti'].xcom_push(key='url', value=url)
 
 
-def search_api(pagination: int, *args, **kwargs) -> json:
+def search_api(*args, **kwargs) -> json:
     '''
     Gets personal token and url created previously, and return our search results.
     '''
     
     oauth_token = kwargs['ti'].xcom_pull(task_ids='t1_get_oauth_token', key='oauth_token')
+    
+    pagination = Variable.get('pagination')
 
     url = kwargs['ti'].xcom_pull(task_ids='t2_set_url', key='url')
     url = url.format(pagination)# Increment pagination with an airflow variable
@@ -85,6 +89,10 @@ def search_api(pagination: int, *args, **kwargs) -> json:
         df = pd.DataFrame.from_dict(result['elementList'])
         print(df.head())
         # Upload df to drive (I think I have to save it first locally and then in another task upload it to drive)
+
+        update_pagination(result=result,
+                          pagination=pagination,
+                          task_instance=kwargs['ti'])
     
     elif content.status_code == 429:
         print("Maximum number of calls exceeded.")
