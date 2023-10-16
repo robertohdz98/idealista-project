@@ -23,3 +23,7 @@ htmlcov/
 *.ipynb
 .pdf
 deprecated/
+
+# airflow logs and plugins
+airflow-etl/src/logs/
+airflow-etl/src/plugins/
