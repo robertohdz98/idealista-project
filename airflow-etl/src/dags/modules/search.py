@@ -5,10 +5,12 @@ import json
 import requests
 
 import pandas as pd
+import numpy as np
 
 from .pagination import update_pagination
 
 from airflow.models import Variable
+from airflow.providers.postgres.hooks.postgres import PostgresHook
 
 # TODO: parameters passing
 # TODO: reduce number of requests (limited to 100)
@@ -85,11 +87,28 @@ def search_api(*args, **kwargs) -> json:
     content = requests.post(url, headers=headers)
 
     if content.status_code == 200:
-        result = json.loads(content.text)
-        df = pd.DataFrame.from_dict(result['elementList'])
-        print(df.head())
-        # Upload df to drive (I think I have to save it first locally and then in another task upload it to drive)
+        result = json.loads(content.text) # Load result as json
 
+        df = pd.DataFrame.from_dict(result['elementList']) # Load json as dataframe
+        
+        # Change dict types to string and replace nan with np.nan --> This is done to avoid having 'nan' in the database
+        df['parkingSpace'] = df['parkingSpace'].astype(str).replace('nan', np.nan)
+        df['detailedType'] = df['detailedType'].astype(str).replace('nan', np.nan)
+        df['suggestedTexts'] = df['suggestedTexts'].astype(str).replace('nan', np.nan)
+        df['labels'] = df['labels'].astype(str).replace('nan', np.nan)
+        df['highlight'] = df['highlight'].astype(str).replace('nan', np.nan)
+
+        df['pagination'] = pagination # Add pagination to dataframe
+        
+        # Insert data into database
+        postgres_hook = PostgresHook(postgres_conn_id="postgres")
+        df.to_sql(name='idealista_homes',
+                  con=postgres_hook.get_sqlalchemy_engine(),
+                  if_exists='append',
+                  index=False,
+                  chunksize=1000)
+        
+        # Update pagination
         update_pagination(result=result,
                           pagination=pagination,
                           task_instance=kwargs['ti'])
