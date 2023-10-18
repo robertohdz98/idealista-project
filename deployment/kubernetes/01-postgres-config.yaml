@@ -1,0 +1,24 @@
+# 
+# kubectl create namespace idealista
+#
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-config
+  namespace: idealista
+  labels:
+    app: postgres
+data:
+  POSTGRES_USER: user
+  POSTGRES_DB: idealista
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-secret
+  namespace: idealista
+  labels:
+    app: postgres
+data:
+  POSTGRES_PASSWORD: #my-password-encoded
