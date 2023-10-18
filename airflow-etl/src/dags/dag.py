@@ -23,7 +23,7 @@ with DAG(
     dag_id="dag_idealista_api_to_db",
     default_args=default_args,
     start_date=datetime(2023, 10, 13),
-    schedule_interval="*/2 * * * *",
+    schedule_interval="* * * * *",
     catchup=False,
 ) as dag:
     task1 = PythonOperator(
@@ -39,7 +39,7 @@ with DAG(
         provide_context=True
     )
     task3 = PythonOperator(
-        task_id="t3_get_data_from_idealista_api", python_callable=search_api,
+        task_id="t3_get_data_and_upload_to_db", python_callable=search_api,
         op_kwargs={"pagination": 1},
         provide_context=True
     )
