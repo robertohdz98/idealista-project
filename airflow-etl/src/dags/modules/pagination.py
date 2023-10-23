@@ -21,9 +21,9 @@ def update_pagination(result:dict,
         None
     """
     
-    # Check if the total number of pages in the search results is equal to the current page number
-    if result['totalPages'] == pagination:
-        # If they are equal, set the pagination variable to 1 and push a message to the task status
+    # Check if the request did not return any results
+    if len(result['elementList']) == 0:
+        # If it did not return any results, set the pagination variable to 1
         Variable.set("pagination", 1)
         task_instance.xcom_push(key='task_status', value='Number of max pages reached. Please review the search parameters.')
     else:
