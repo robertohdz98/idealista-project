@@ -7,7 +7,10 @@ import requests
 import pandas as pd
 import numpy as np
 
+from datetime import datetime
+
 from .pagination import update_pagination
+from .retrieve_data import retrieve_propertyCodes
 
 from airflow.models import Variable
 from airflow.providers.postgres.hooks.postgres import PostgresHook
@@ -63,7 +66,7 @@ def set_url(country:str,
            '&distance=' + distance_to_center +  # required
            '&propertyType=' + property_type +
            '&sort=' + sort +
-           '&numPage=%s' +
+           '&numPage=' + str(Variable.get('pagination')) +
            '&language=' + language)
 
     kwargs['ti'].xcom_push(key='url', value=url)
@@ -79,7 +82,6 @@ def search_api(*args, **kwargs) -> json:
     pagination = Variable.get('pagination')
 
     url = kwargs['ti'].xcom_pull(task_ids='t2_set_url', key='url')
-    url = url.format(pagination)# Increment pagination with an airflow variable
 
     headers = {'Content-Type': 'Content-Type: multipart/form-data;',
                'Authorization': 'Bearer ' + oauth_token}
@@ -89,24 +91,29 @@ def search_api(*args, **kwargs) -> json:
     if content.status_code == 200:
         result = json.loads(content.text) # Load result as json
 
-        df = pd.DataFrame.from_dict(result['elementList']) # Load json as dataframe
-        
-        # Change dict types to string and replace nan with np.nan --> This is done to avoid having 'nan' in the database
-        df['parkingSpace'] = df['parkingSpace'].astype(str).replace('nan', np.nan)
-        df['detailedType'] = df['detailedType'].astype(str).replace('nan', np.nan)
-        df['suggestedTexts'] = df['suggestedTexts'].astype(str).replace('nan', np.nan)
-        df['labels'] = df['labels'].astype(str).replace('nan', np.nan)
-        df['highlight'] = df['highlight'].astype(str).replace('nan', np.nan)
+        if len(result['elementList']) != 0:
+            df = pd.DataFrame.from_dict(result['elementList']) # Load json as dataframe
 
-        df['pagination'] = pagination # Add pagination to dataframe
-        
-        # Insert data into database
-        postgres_hook = PostgresHook(postgres_conn_id="postgres")
-        df.to_sql(name='idealista_homes',
-                  con=postgres_hook.get_sqlalchemy_engine(),
-                  if_exists='append',
-                  index=False,
-                  chunksize=1000)
+            propertyCodes_inserted = retrieve_propertyCodes() # Retrieve propertyCodes from database
+            df = df[~df['propertyCode'].isin(propertyCodes_inserted)] # Remove already inserted propertyCodes
+            
+            # Change dict types to string and replace nan with np.nan --> This is done to avoid having 'nan' in the database
+            dict_to_str = ['parkingSpace','detailedType','suggestedTexts','labels','highlight']
+            for col in dict_to_str:
+                if col in df.columns:
+                    df[col] = df[col].astype(str).replace('nan', np.nan)
+
+            df['pagination'] = pagination # Add pagination to dataframe
+
+            df['upload_date'] = datetime.now() # Add upload date to dataframe
+            
+            # Insert data into database
+            postgres_hook = PostgresHook(postgres_conn_id="postgres")
+            df.to_sql(name='idealista_homes',
+                    con=postgres_hook.get_sqlalchemy_engine(),
+                    if_exists='append',
+                    index=False,
+                    chunksize=1000)
         
         # Update pagination
         update_pagination(result=result,
