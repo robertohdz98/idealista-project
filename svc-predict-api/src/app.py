@@ -1,10 +1,9 @@
 import logging
-import os
 
 import uvicorn
 from fastapi import FastAPI, Query
 from fastapi.responses import RedirectResponse
-from src.modules.docs import API_CONTACT, API_LICENSE, API_TAGS
+from modules.docs import API_CONTACT, API_LICENSE, API_TAGS
 
 app = FastAPI(
     title="IDEALISTA Rent Price Predictor API",
@@ -52,12 +51,10 @@ async def predict_rent_price(
 
 
 if __name__ == "__main__":
-    API_PORT = os.environ.get("API_PORT", 8081)
-
     uvicorn.run(
         app,
         host="0.0.0.0",
-        port=API_PORT,
+        port=8081,
         log_level="debug",
         proxy_headers=True,
         # reload=True

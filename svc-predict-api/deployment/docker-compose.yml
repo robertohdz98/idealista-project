@@ -4,18 +4,16 @@ services:
 
   predictor-api:
     container_name: predictor-api
-    image: predi-api:latest
+    image: predictor-api:latest
     build:
       context: ..
       dockerfile: Dockerfile
     ports:
-      - 8080:8080
+      - ${API_PORT}:8081
     # depends_on:
     #   -
     #volumes:
     #  - api-logs:/logs/predictor-api
-    #environment:
-    #  - API_PORT=
     restart: always
     #networks:
     #  - idealista-net
