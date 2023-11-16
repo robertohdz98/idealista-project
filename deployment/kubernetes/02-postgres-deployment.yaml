@@ -1,0 +1,163 @@
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: postgres-pv
+  labels:
+    type: local 
+    app: postgres
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "/mnt/data"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: idealista
+  labels:
+    app: postgres
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-deployment
+  namespace: idealista
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15.1
+          imagePullPolicy: "IfNotPresent"
+          ports:
+            - containerPort: 5432
+          envFrom:
+            - configMapRef:
+                name: postgres-config
+            - secretRef:
+                name: postgres-secret
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: postgres-pv
+      volumes:
+        - name: postgres-pv
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-svc
+  namespace: idealista
+  labels:
+    app: postgres
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5432
+      targetPort: 5432
+  selector:
+    app: postgres
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: adminer-deployment
+  namespace: idealista
+  labels:
+    app: adminer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: adminer
+  template:
+    metadata:
+      labels:
+        app: adminer
+    spec:
+      containers:
+        - name: adminer
+          image: michalhosna/adminer
+          ports:
+            - containerPort: 8080 
+          env:
+            - name: ADMINER_DRIVER
+              value: pgsql
+            - name: ADMINER_SERVER
+              value: postgres-svc:5432
+            - name: ADMINER_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: postgres-config
+                  key: POSTGRES_USER
+            - name: ADMINER_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: postgres-config
+                  key: POSTGRES_DB
+            - name: ADMINER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_PASSWORD
+            #- name: ADMINER_AUTOLOGIN
+            #  value: "1"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: adminer-svc
+  namespace: idealista
+  labels:
+    app: adminer
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    app: adminer
+---
+# ## For ingress through Ngrok...
+# https://ngrok.com/docs/using-ngrok-with/k8s/
+# 1. Install ngrok with Helm chart
+# 2. Create free account and get apiKey/token
+# 3. Create ngrok ingress controller (endpoint in Cloud Edge > Domains)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: adminer-ingress
+  namespace: idealista
+spec:
+  ingressClassName: ngrok
+  rules:
+  - host: stirring-bold-amoeba.ngrok-free.app #$NGROK_DOMAIN
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: adminer-svc
+            port:
+              number: 80
