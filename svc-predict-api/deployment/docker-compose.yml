@@ -1,0 +1,26 @@
+version: '3.7'
+
+services:
+
+  predictor-api:
+    container_name: predictor-api
+    image: predictor-api:latest
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    ports:
+      - ${API_PORT}:8081
+    # depends_on:
+    #   -
+    #volumes:
+    #  - api-logs:/logs/predictor-api
+    restart: always
+    #networks:
+    #  - idealista-net
+
+#networks:
+#  idealista-net:
+#    external: true
+
+volumes:
+  api-logs:
