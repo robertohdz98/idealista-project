@@ -1,0 +1,28 @@
+version: '3.7'
+
+services:
+
+  svc-template:
+    container_name:
+    image:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    ports:
+      -
+    depends_on:
+      -
+    volumes:
+      -
+    environment:
+      -
+    restart: always
+    #networks:
+    #  - idealista-net
+
+#networks:
+#  idealista-net:
+#    external: true
+
+#volumes:
+#
