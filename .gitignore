@@ -20,6 +20,9 @@ htmlcov/
 .DS_Store
 
 # Temporal tests
-*.ipynb
 .pdf
 deprecated/
+
+# Others
+*.log
+latest
