@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "idealista-svc-template"
+name = "idealista-airflow-etl"
 version = "1.0.0"
 description = ""
 authors = [
@@ -10,3 +10,5 @@ authors = [
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12"
 ipykernel = "6.21.*"
+pandas = "^2.0.3"
+apache-airflow = "^2.8.0"

@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "svc-predict-api"
+name = "idealista-svc-predict-api"
 version = "1.0.0"
 description = ""
 authors = [
