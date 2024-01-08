@@ -11,11 +11,8 @@ COPY . $HOMEDIR
 ENV PYTHONPATH='$PYTHONPATH:/app'
 
 RUN pip install --no-cache-dir --upgrade pip
-RUN pip install poetry
+RUN pip install poetry idna
 
 RUN poetry config virtualenvs.create false
 RUN poetry install --no-dev
 #RUN poetry install --no-dev --without $DEPENDENCIESTOEXCLUDE
-
-# ...
-# E.g., ENTRYPOINT ["python", "src/app.py"]
