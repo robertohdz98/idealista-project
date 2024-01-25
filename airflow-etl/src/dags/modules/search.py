@@ -97,6 +97,8 @@ def search_api(*args, **kwargs) -> json:
             propertyCodes_inserted = retrieve_propertyCodes() # Retrieve propertyCodes from database
             df = df[~df['propertyCode'].isin(propertyCodes_inserted)] # Remove already inserted propertyCodes
             
+            df.drop_duplicates(subset=['propertyCode'], inplace=True) # Remove duplicates
+
             # Change dict types to string and replace nan with np.nan --> This is done to avoid having 'nan' in the database
             dict_to_str = ['parkingSpace','detailedType','suggestedTexts','labels','highlight']
             for col in dict_to_str:
