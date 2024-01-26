@@ -1,0 +1,1 @@
+SELECT idealista_homes."propertyCode" FROM idealista_homes;

@@ -39,15 +39,9 @@ with DAG(
         provide_context=True
     )
     task3 = PythonOperator(
-        task_id="t3_get_data_from_idealista_api", python_callable=search_api,
+        task_id="t3_get_data_and_upload_to_db", python_callable=search_api,
         op_kwargs={"pagination": 1},
         provide_context=True
     )
-#    task3 = PythonOperator(
-#        task_id="transform_data", python_callable=
-#    )
-#    task4 = PythonOperator(
-#        task_id="upload_data_to_db", python_callable=
-#    )
 
     task1 >> task2 >> task3
