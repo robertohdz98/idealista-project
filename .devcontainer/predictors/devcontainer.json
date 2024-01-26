@@ -12,7 +12,7 @@
 	"workspaceFolder": "/app",
 	"workspaceMount": "source=${localWorkspaceFolder}/predictors,target=/app,type=bind,consistency=delegated",
 	"mounts": [
-		"source=${localEnv:HOME}/.gitconfig,target=/etc/gitconfig,type=bind,consistency=delegated"
+		"source=${localEnv:USERPROFILE}/.gitconfig,target=/etc/gitconfig,type=bind,consistency=delegated"
 	],
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
