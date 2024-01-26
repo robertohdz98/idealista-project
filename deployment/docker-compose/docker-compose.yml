@@ -1,53 +1,137 @@
-version: '3.1'
+---
+version: '3'
+x-airflow-common: &airflow-common
+  image: ${AIRFLOW_IMAGE_NAME:-apache/airflow:2.0.2}
+  environment: &airflow-common-env
+    AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+    AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}
+    AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}
+    AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0
+    AIRFLOW__CORE__FERNET_KEY: ''
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    AIRFLOW__API__AUTH_BACKEND: 'airflow.api.auth.backend.basic_auth'
+  volumes:
+    - ../../airflow-etl/src/dags:/opt/airflow/dags #./dags:/opt/airflow/dags
+    - ../../airflow-etl/src/logs:/opt/airflow/logs
+    - ../../airflow-etl/src/plugins:/opt/airflow/plugins
+  user: "${AIRFLOW_UID:-50000}:${AIRFLOW_GID:-50000}"
+  depends_on:
+    redis:
+      condition: service_healthy
+    postgres:
+      condition: service_healthy
 
 services:
-
-  # Database for homes
-  properties-db:
-    image: postgres:15.1
-    container_name: properties-db
-    restart: always
+  postgres:
+    image: postgres:13
+    container_name: postgres
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    networks:
+      - idealista-network
     volumes:
-      - pgdata:/var/lib/postgresql/data #host:container
-    healthcheck:
-      test: ["CMD-SHELL", "sh -c 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}'"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 5s
-
-  # Auxiliary UI for Database management
-  properties-db-ui:
-    image: michalhosna/adminer #adminer:4.8.1 #official image
-    #https://github.com/michalhosna/adminer-docker
-    container_name: properties-db-ui
-    restart: always
+      - postgres-db-volume:/var/lib/postgresql/data
     ports:
-      - "8080:8080"
+      - 5432:5432
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "airflow" ]
+      interval: 5s
+      retries: 5
+    restart: always
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - 6379:6379
+    networks:
+      - idealista-network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 30s
+      retries: 50
+    restart: always
+
+  airflow-webserver:
+    <<: *airflow-common
+    command: webserver
+    container_name: airflow-webserver
+    ports:
+      - 8080:8080
+    networks:
+      - idealista-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "--fail",
+          "http://localhost:8080/health"
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: always
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    container_name: airflow-scheduler
+    networks:
+      - idealista-network
+    restart: always
+
+  airflow-worker:
+    <<: *airflow-common
+    command: celery worker
+    container_name: airflow-worker
+    networks:
+      - idealista-network
+    restart: always
+
+  airflow-init:
+    <<: *airflow-common
+    command: version
+    container_name: airflow-init
+    networks:
+      - idealista-network
     environment:
-      - ADMINER_DRIVER=pgsql
-      - ADMINER_SERVER=properties-db
-      - ADMINER_USERNAME=${POSTGRES_USER}
-      - ADMINER_DB=${POSTGRES_DB}
-      - ADMINER_PASSWORD=${POSTGRES_PASSWORD}
-      - ADMINER_AUTOLOGIN=1
-      - ADMINER_NAME=Idealista Project!
+      <<: *airflow-common-env
+      _AIRFLOW_DB_UPGRADE: 'true'
+      _AIRFLOW_WWW_USER_CREATE: 'true'
+      _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
+      _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
+
+  flower:
+    <<: *airflow-common
+    command: celery flower
+    container_name: flower
+    ports:
+      - 5555:5555
+    networks:
+      - idealista-network
+    healthcheck:
+      test: [ "CMD", "curl", "--fail", "http://localhost:5555/" ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: always
 
   # Mlflow Tracking Server and Model Registry
   mlflow-server:
     image: ghcr.io/mlflow/mlflow:v2.7.1
     container_name: mlflow-server
+    networks:
+      - idealista-network
     command: >
       bash -c "pip install --upgrade pip
       && pip install psycopg2-binary boto3
       && mlflow server
-      --backend-store-uri=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@properties-db:5432/${POSTGRES_DB}
+      --backend-store-uri=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${MLFLOW_DB}
       --host=0.0.0.0
       --port=5000
       --artifacts-destination=s3://${S3_BUCKET_NAME}/"
@@ -56,7 +140,7 @@ services:
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${MLFLOW_POSTGRES_DB}
+      - POSTGRES_DB=${MLFLOW_DB}
       - S3_BUCKET_NAME=${S3_BUCKET_NAME}
       - AWS_ACCESS_KEY_ID=${MINIO_ROOT_USER}
       - AWS_SECRET_ACCESS_KEY=${MINIO_ROOT_PASSWORD}
@@ -83,7 +167,8 @@ services:
       retries: 3
 
 volumes:
-  pgdata:
+  postgres-db-volume:
   minio_data:
-#networks:
-#  idealista-net:
+
+networks:
+  idealista-network:
