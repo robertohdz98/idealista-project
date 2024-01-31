@@ -1,0 +1,13 @@
+[tool.poetry]
+name = "idealista-streamlit-ui"
+version = "1.0.0"
+description = ""
+authors = [
+    "Roberto Hernandez <betohr60@gmail.com>",
+    "Jorge Tarancon <si.jorgetarancon@gmail.com>",
+]
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.9.7 || >3.9.7,<3.12"
+streamlit = "^1.30.0"
+scikit-learn = "^1.4.0"
